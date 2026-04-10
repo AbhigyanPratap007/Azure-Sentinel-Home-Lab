@@ -61,7 +61,7 @@ Windows Security logs were collected in real time using Azure Monitor Agent.
 
 # Key Event IDs Monitored
 
-Event ID	Description	Use Case
+# Event ID	Description	Use Case
 
 4624	Successful logon	User authentication tracking
 4625	Failed logon	Brute-force detection
@@ -82,6 +82,7 @@ SecurityEvent
 
 SecurityEvent
 | where EventID in (4672, 4688)
+
 # 6.3 Aggregation of Failed Logins
 
 SecurityEvent
@@ -102,7 +103,9 @@ SecurityEvent
 | where EventID == 4625
 | summarize FailedAttempts = count() by Account, Computer, bin(TimeGenerated, 5m)
 | where FailedAttempts > 5
-Configuration
+
+# Configuration
+
 Severity: High
 Frequency: Every 5 minutes
 Lookup period: 5 minutes
@@ -121,7 +124,9 @@ Detects when a user is added to the local Administrators group.
 SecurityEvent
 | where EventID == 4732
 | where TargetUserName contains "Administrators"
-Configuration
+
+# Configuration
+
 Severity: High
 Trigger condition: Any match
 
@@ -136,12 +141,15 @@ Identifies unauthorized privilege escalation or persistence mechanisms used by a
 Locked system using Windows + L
 Entered incorrect passwords multiple times within a short window
 Generated Event ID 4625
+
 # Result
 
 Detection rule triggered successfully
 Alert generated in Microsoft Sentinel
 Incident created and visible in SOC dashboard
-8.2 Privilege Escalation Simulation
+
+# 8.2 Privilege Escalation Simulation
+
 net user sentineltest Password123! /add
 net localgroup administrators sentineltest /add
 
@@ -161,7 +169,9 @@ Alerts correlated with generated events
 Time-based aggregation confirmed rule accuracy
 Incident filtering initially hid alerts due to priority scoring
 Adjusting filters revealed correct detections
-10. Challenges & Troubleshooting
+
+# 10. Challenges & Troubleshooting
+
 Initial delay in log ingestion due to Azure synchronization
 Data Collection Rule required correct resource association
 Detection rule tuning required understanding of time-based aggregation

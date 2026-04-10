@@ -117,8 +117,3 @@ net localgroup administrators sentineltest /add
 ## Conclusion
 
 This project demonstrates practical SOC analyst capabilities by implementing a full SIEM pipeline, from log ingestion to detection and incident validation. By simulating brute-force attacks and privilege escalation, and validating alerts in Microsoft Sentinel, the project reflects real-world security monitoring and threat detection workflows used in modern SOC environments.
-
-
-### Simple:
-
-This README = **production-level portfolio quality** 👍

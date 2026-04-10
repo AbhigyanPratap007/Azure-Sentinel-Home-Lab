@@ -1,119 +1,182 @@
-# Azure Sentinel Home Lab 
+# Microsoft Sentinel SOC Lab
 
-# Microsoft Sentinel SOC Lab – Windows Security Monitoring & Detection
+# Windows Security Monitoring, Detection Engineering & Incident Validation
 
-## Overview
+# 1. Project Overview
 
-This project demonstrates a hands-on Security Operations Center (SOC) use case by deploying a cloud-based SIEM using Microsoft Sentinel. A local Windows endpoint was onboarded via Azure Arc and Azure Monitor Agent (AMA) to enable real-time ingestion of Windows Security logs. The project focuses on log collection, analysis, detection engineering, and alert validation using real-world attack simulations.
+This project demonstrates the end-to-end deployment of a cloud-based Security Information and Event Management (SIEM) solution using Microsoft Sentinel, focused on real-world Security Operations Center (SOC) workflows.
 
-## Architecture
+A local Windows endpoint was onboarded into Azure using Azure Arc and integrated with Microsoft Sentinel via Azure Monitor Agent (AMA). The lab enables real-time ingestion, analysis, and detection of Windows Security Events, followed by validation through simulated attack scenarios.
 
-* SIEM Platform: Microsoft Sentinel
-* Log Storage: Log Analytics Workspace
-* Endpoint Integration: Azure Arc (Hybrid Machine)
-* Agent: Azure Monitor Agent (AMA)
-* Data Source: Windows Security Event Logs
+The objective of this project is to replicate practical SOC analyst responsibilities, including log collection, event analysis, detection rule creation, and incident validation.
 
-## Data Ingestion
+# 2. Objectives
 
-A local Windows machine was onboarded to Azure Arc and connected to Microsoft Sentinel using a Data Collection Rule (DCR). Security events were collected in real time using AMA.
+Deploy and configure Microsoft Sentinel SIEM
+Onboard a local Windows endpoint using Azure Arc
+Enable ingestion of Windows Security Event logs
+Perform log analysis using Kusto Query Language (KQL)
+Design and implement detection rules based on real attack scenarios
+Simulate attacks and validate detection capability
+Investigate alerts and incidents within Sentinel
 
-### Key Event IDs Monitored
+# 3. Architecture
 
-* 4624 – Successful logon
-* 4625 – Failed logon
-* 4672 – Special privileges assigned (admin logon)
-* 4688 – Process creation
-* 4732 – User added to local Administrators group
+# Components Used
 
-## Log Analysis (KQL)
+SIEM Platform: Microsoft Sentinel
+Log Storage: Log Analytics Workspace
+Endpoint Integration: Azure Arc (Hybrid Machine)
+Agent: Azure Monitor Agent (AMA)
+Data Source: Windows Security Event Logs
+Data Flow
 
-Kusto Query Language (KQL) was used to query and analyse ingested logs.
+Local Windows Machine → Azure Arc → Azure Monitor Agent → Data Collection Rule → Log Analytics Workspace → Microsoft Sentinel → Analytics Rules → Incidents
 
-### Example Queries
 
-**Login Activity:**
+# 4. Environment Setup
 
-```kql
+# 4.1 Microsoft Sentinel Deployment
+
+Created Log Analytics Workspace
+Enabled Microsoft Sentinel on the workspace
+Configured Data Connectors
+
+# 4.2 Azure Arc Onboarding
+
+Installed Azure Connected Machine Agent on local Windows system
+Registered system as a hybrid resource in Azure
+Verified successful connection in Azure Arc
+
+# 4.3 Data Collection Configuration
+
+Created Data Collection Rule (DCR)
+Selected Windows Security Events (All Events)
+Linked Azure Arc machine to the DCR
+Verified log ingestion in Log Analytics
+
+# 5. Data Ingestion & Log Sources
+
+Windows Security logs were collected in real time using Azure Monitor Agent.
+
+# Key Event IDs Monitored
+
+Event ID	Description	Use Case
+
+4624	Successful logon	User authentication tracking
+4625	Failed logon	Brute-force detection
+4672	Special privileges assigned	Privileged access monitoring
+4688	Process creation	Suspicious process execution
+4732	User added to group	Privilege escalation detection
+
+# 6. Log Analysis using KQL
+
+Kusto Query Language (KQL) was used to query and analyse logs.
+
+# 6.1 Authentication Analysis
+
 SecurityEvent
 | where EventID == 4624 or EventID == 4625
-```
 
-**Privilege & Process Activity:**
+# 6.2 Privilege & Process Monitoring
 
-```kql
 SecurityEvent
 | where EventID in (4672, 4688)
-```
+# 6.3 Aggregation of Failed Logins
 
+SecurityEvent
+| where EventID == 4625
+| summarize FailedAttempts=count() by Account, bin(TimeGenerated, 5m)
 
-## Detection Engineering
+# 7. Detection Engineering
 
-### 1. Brute Force Detection
+Two high-impact detection rules were created to simulate real SOC use cases.
+
+# 7.1 Brute Force Login Detection
 
 Detects multiple failed login attempts within a short time window.
 
-```kql
+# Rule Logic
+
 SecurityEvent
 | where EventID == 4625
 | summarize FailedAttempts = count() by Account, Computer, bin(TimeGenerated, 5m)
 | where FailedAttempts > 5
-```
+Configuration
+Severity: High
+Frequency: Every 5 minutes
+Lookup period: 5 minutes
+Trigger condition: More than 5 failed logins
 
-* Severity: High
-* Frequency: Every 5 minutes
-* Trigger: >5 failed logins in 5 minutes
+# Purpose
 
+Identifies potential password guessing or brute-force attacks targeting user accounts.
 
-### 2. Privilege Escalation Detection
+# 7.2 Privilege Escalation Detection
 
 Detects when a user is added to the local Administrators group.
 
-```kql
+# Rule Logic
+
 SecurityEvent
 | where EventID == 4732
 | where TargetUserName contains "Administrators"
-```
+Configuration
+Severity: High
+Trigger condition: Any match
 
-* Severity: High
-* Trigger: Any match
+# Purpose
 
+Identifies unauthorized privilege escalation or persistence mechanisms used by attackers.
 
-## Attack Simulation & Validation
+# 8. Attack Simulation & Validation
 
-### Brute Force Simulation
+# 8.1 Brute Force Attack Simulation
 
-* Locked system (Windows + L)
-* Entered incorrect password multiple times
-* Generated Event ID 4625
-* Detection rule triggered alert and incident
+Locked system using Windows + L
+Entered incorrect passwords multiple times within a short window
+Generated Event ID 4625
+# Result
 
-### Privilege Escalation Simulation
-
-```powershell
+Detection rule triggered successfully
+Alert generated in Microsoft Sentinel
+Incident created and visible in SOC dashboard
+8.2 Privilege Escalation Simulation
 net user sentineltest Password123! /add
 net localgroup administrators sentineltest /add
-```
 
-* Generated Event ID 4732
-* Detection rule successfully triggered alert
+# Result
 
-## Results
+Event ID 4732 generated
+Detection rule triggered
+Alert and incident successfully created
 
-* Successfully ingested and analysed real-time Windows Security logs
-* Validated detection rules using live attack simulations
-* Generated and investigated alerts and incidents in Microsoft Sentinel
-* Demonstrated end-to-end SOC workflow: ingestion → detection → alerting → investigation
+# 9. Incident Investigation
 
+Alerts generated by detection rules were analysed within Microsoft Sentinel.
 
-## Key Learnings
+# Observations
 
-* Built a functional SIEM environment using Microsoft Sentinel
-* Gained hands-on experience with Azure Arc and AMA
-* Developed practical detection rules aligned with real-world attack scenarios
-* Understood importance of log correlation, timing, and alert filtering in SOC operations
+Alerts correlated with generated events
+Time-based aggregation confirmed rule accuracy
+Incident filtering initially hid alerts due to priority scoring
+Adjusting filters revealed correct detections
+10. Challenges & Troubleshooting
+Initial delay in log ingestion due to Azure synchronization
+Data Collection Rule required correct resource association
+Detection rule tuning required understanding of time-based aggregation
+Sentinel incident filters initially hid valid alerts
 
+# 11. Key Learnings
 
-## Conclusion
+End-to-end SIEM pipeline implementation in a cloud environment
+Practical experience with Azure Arc and hybrid endpoint monitoring
+Understanding of Windows Security Event logging and analysis
+Hands-on detection engineering aligned with real SOC scenarios
+Importance of log timing, aggregation, and alert visibility
 
-This project demonstrates practical SOC analyst capabilities by implementing a full SIEM pipeline, from log ingestion to detection and incident validation. By simulating brute-force attacks and privilege escalation, and validating alerts in Microsoft Sentinel, the project reflects real-world security monitoring and threat detection workflows used in modern SOC environments.
+# 12. Conclusion
+
+This project successfully demonstrates real-world SOC analyst capabilities by implementing a fully functional SIEM pipeline using Microsoft Sentinel. From onboarding an endpoint and ingesting logs to designing detection rules and validating incidents through simulated attacks, the project reflects practical security monitoring and threat detection workflows used in modern SOC environments.
+
+The ability to detect brute-force login attempts and privilege escalation activity highlights the effectiveness of the implemented detections and showcases a strong foundation in security event analysis, detection engineering, and incident response.
